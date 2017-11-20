@@ -60,13 +60,18 @@ public class Application implements CommandLineRunner {
           startCalendar.add(Calendar.DAY_OF_MONTH, -1);
           Calendar endCalendar = Calendar.getInstance();
           endCalendar.add(Calendar.DAY_OF_MONTH, 1);
-          String kyuyoCompaniesSql = "select * from companies where modified between  ? and ?";
-          companies = kyuyoJdbcTemplate.query(kyuyoCompaniesSql, new Object[] {startCalendar.getTime(), endCalendar.getTime()}, new CompanyRowMapper());
-          System.out.println("After modified date " + companies.size());
+          String kyuyoCompaniesSql = "select * from companies where (modified between  ? and ?) or (created between ? and ?)";
+          companies = kyuyoJdbcTemplate.query(kyuyoCompaniesSql, new Object[] {startCalendar.getTime(), endCalendar.getTime(),
+                  startCalendar.getTime(), endCalendar.getTime()}, new CompanyRowMapper());
           for (Company company : companies) {
               System.out.println(company.getName());
-              Company companyFromPayslipDb = payslipJdbcTemplate.queryForObject("select * from companies where id = ?", 
-                      new Object[] {company.getId()}, new CompanyRowMapper());
+              Company companyFromPayslipDb = null;
+              try {
+                  companyFromPayslipDb = payslipJdbcTemplate.queryForObject("select * from companies where id = ?", 
+                          new Object[] {company.getId()}, new CompanyRowMapper());
+              } catch (Exception ex) {
+                  // no result
+              }
               // update
               if (companyFromPayslipDb != null) {
                   payslipJdbcTemplate.update(companyUpdateSql, new Object[] {company.getCompanyName(), company.getCreatedDate(),
