@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -40,14 +41,43 @@ public class Application implements CommandLineRunner {
         int companyCount = payslipJdbcTemplate.queryForObject(payslipCompanyRowCountSql, Integer.class);
         System.out.println(companyCount);
         List<Company> companies = new ArrayList<>();
+        String insertCompanySql = "insert into companies (id, company_name, created, deleted, mail, modified , name) "
+                + "values (?, ?, ?, ?, ?, ?, ?)";
+        String companyUpdateSql = "update companies set company_name = ?, "
+                + "created = ?, deleted = ?, mail = ?, modified = ?, name = ? where id = ?";
+
         if (companyCount <= 0) {
-            
-        } else {
             String kyuyoCompaniesSql = "select * from companies";
             companies = kyuyoJdbcTemplate.query(kyuyoCompaniesSql, new CompanyRowMapper());
             for (Company company : companies) {
-                System.out.println(company.getName());
+                payslipJdbcTemplate.update(insertCompanySql, new Object[] {company.getId(),
+                        company.getCompanyName(), company.getCreatedDate(), 
+                        company.getDeleted(), company.getEmail(), company.getModifiedDate(), 
+                        company.getName()});
             }
+        } else {
+          Calendar startCalendar = Calendar.getInstance();
+          startCalendar.add(Calendar.DAY_OF_MONTH, -1);
+          Calendar endCalendar = Calendar.getInstance();
+          endCalendar.add(Calendar.DAY_OF_MONTH, 1);
+          String kyuyoCompaniesSql = "select * from companies where modified between  ? and ?";
+          companies = kyuyoJdbcTemplate.query(kyuyoCompaniesSql, new Object[] {startCalendar.getTime(), endCalendar.getTime()}, new CompanyRowMapper());
+          System.out.println("After modified date " + companies.size());
+          for (Company company : companies) {
+              System.out.println(company.getName());
+              Company companyFromPayslipDb = payslipJdbcTemplate.queryForObject("select * from companies where id = ?", 
+                      new Object[] {company.getId()}, new CompanyRowMapper());
+              // update
+              if (companyFromPayslipDb != null) {
+                  payslipJdbcTemplate.update(companyUpdateSql, new Object[] {company.getCompanyName(), company.getCreatedDate(),
+                          company.getDeleted(), company.getEmail(), company.getModifiedDate(), company.getName(), company.getId()});
+              } else {
+                  payslipJdbcTemplate.update(insertCompanySql, new Object[] {company.getId(),
+                          company.getCompanyName(), company.getCreatedDate(), 
+                          company.getDeleted(), company.getEmail(), company.getModifiedDate(), 
+                          company.getName()});
+              }
+          }
         }
     }
 
