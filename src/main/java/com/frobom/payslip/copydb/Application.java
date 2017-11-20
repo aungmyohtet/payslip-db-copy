@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.sql.DataSource;
 
@@ -12,6 +14,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import com.frobom.payslip.entity.Company;
+import com.frobom.payslip.entity.Staff;
+import com.frobom.payslip.rowmapper.CompanyRowMapper;
+import com.frobom.payslip.rowmapper.StaffRowMapper;
 
 @SpringBootApplication
 public class Application implements CommandLineRunner {
@@ -22,30 +30,24 @@ public class Application implements CommandLineRunner {
 
     public void run(String... arg0) throws Exception {
         System.out.println("Started Application...");
-        testKyuyo();
-        testPayslip();
+        copyCompanies();
         System.exit(0);
     }
 
-    private void testKyuyo() throws SQLException {
-        Connection kyuyoConnection = kyuyoDataSource.getConnection();
-        PreparedStatement statement = kyuyoConnection.prepareStatement("select * from staffs where username = ?");
-        statement.setString(1, "0018");
-        ResultSet resultSet = statement.executeQuery();
-        if (resultSet.next()) {
-            String name = resultSet.getString("name");
-            System.out.println(name);
-        }
-    }
-    
-    private void testPayslip() throws SQLException {
-        Connection kyuyoConnection = payslipDataSource.getConnection();
-        PreparedStatement statement = kyuyoConnection.prepareStatement("select * from staffs where username = ?");
-        statement.setString(1, "0018");
-        ResultSet resultSet = statement.executeQuery();
-        if (resultSet.next()) {
-            String name = resultSet.getString("name");
-            System.out.println(name);
+    public void copyCompanies() {
+        System.out.println("Copying companies ...");
+        String payslipCompanyRowCountSql = "select count(id) from companies";
+        int companyCount = payslipJdbcTemplate.queryForObject(payslipCompanyRowCountSql, Integer.class);
+        System.out.println(companyCount);
+        List<Company> companies = new ArrayList<>();
+        if (companyCount <= 0) {
+            
+        } else {
+            String kyuyoCompaniesSql = "select * from companies";
+            companies = kyuyoJdbcTemplate.query(kyuyoCompaniesSql, new CompanyRowMapper());
+            for (Company company : companies) {
+                System.out.println(company.getName());
+            }
         }
     }
 
@@ -56,6 +58,14 @@ public class Application implements CommandLineRunner {
     @Autowired
     @Qualifier(value = "payslipDataSource")
     public DataSource payslipDataSource;
+
+    @Autowired
+    @Qualifier(value = "kyuyoJdbcTemplate")
+    public JdbcTemplate  kyuyoJdbcTemplate;
+
+    @Autowired
+    @Qualifier(value = "payslipJdbcTemplate")
+    public JdbcTemplate  payslipJdbcTemplate;
     
 
 }
