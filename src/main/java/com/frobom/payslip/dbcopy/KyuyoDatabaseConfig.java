@@ -1,35 +1,34 @@
-package com.frobom.payslip.copydb;
+package com.frobom.payslip.dbcopy;
 
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.frobom.payslip.dbcopy.repository.CompanyRepository;
 import com.zaxxer.hikari.HikariDataSource;
 
 @Configuration
 @PropertySource("classpath:config.properties")
-public class PayslipDatabaseConfig {
+public class KyuyoDatabaseConfig {
 
-    @Value("${payslip.datasource.driver-class-name}")
+    @Value("${kyuyo.datasource.driver-class-name}")
     private String driverClassName;
 
-    @Value("${payslip.datasource.username}")
+    @Value("${kyuyo.datasource.username}")
     private String user;
 
-    @Value("${payslip.datasource.password}")
+    @Value("${kyuyo.datasource.password}")
     private String password;
 
-    @Value("${payslip.datasource.url}")
+    @Value("${kyuyo.datasource.url}")
     private String url;
 
-    @Primary
-    @Bean(name = "payslipDataSource")
-    public DataSource payslipDataSource() {
+    @Bean(name = "kyuyoDataSource")
+    public DataSource kyuyoDataSource() {
         HikariDataSource dataSource = new HikariDataSource();
         dataSource.setDriverClassName(driverClassName);
         dataSource.setUsername(user);
@@ -40,8 +39,13 @@ public class PayslipDatabaseConfig {
         return dataSource;
     }
 
-    @Bean(name = "payslipJdbcTemplate")
+    @Bean(name = "kyuyoJdbcTemplate")
     public JdbcTemplate  kyuyoJdbcTemplate() {
-        return new JdbcTemplate(payslipDataSource());
+        return new JdbcTemplate(kyuyoDataSource());
+    }
+
+    @Bean(name = "kyuyoCompanyRepository") 
+    public CompanyRepository kyuyoCompanyRepository() {
+        return new CompanyRepository(kyuyoJdbcTemplate());
     }
 }

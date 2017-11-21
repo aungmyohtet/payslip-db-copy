@@ -1,18 +1,13 @@
-package com.frobom.payslip.entity;
+package com.frobom.payslip.dbcopy.entity;
 
 import java.util.Date;
 import org.springframework.format.annotation.DateTimeFormat;
 
-public class Holiday {
+public class Grade {
 
     protected int id;
 
-    @DateTimeFormat(pattern = "MM/dd/yyyy")
-    private Date day;
-
-    private int companyId;
-
-    private String hoildayName;
+    private String name;
 
     @DateTimeFormat(pattern = "MM/dd/yyyy")
     private Date modifiedDate;
@@ -22,6 +17,8 @@ public class Holiday {
 
     private String deleted;
 
+    private int companyId;
+
     public Integer getId() {
         return id;
     }
@@ -30,28 +27,20 @@ public class Holiday {
         this.id = id;
     }
 
-    public Date getDay() {
-        return day;
+    public String getName() {
+        return name;
     }
 
-    public void setDay(Date day) {
-        this.day = day;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public int getCompanyId() {
-        return companyId;
+    public String getDeleted() {
+        return deleted;
     }
 
-    public void setCompanyId(int companyId) {
-        this.companyId = companyId;
-    }
-
-    public String getHoildayName() {
-        return hoildayName;
-    }
-
-    public void setHoildayName(String hoildayName) {
-        this.hoildayName = hoildayName;
+    public void setDeleted(String deleted) {
+        this.deleted = deleted;
     }
 
     public Date getModifiedDate() {
@@ -70,11 +59,12 @@ public class Holiday {
         this.createdDate = createdDate;
     }
 
-    public String getDeleted() {
-        return deleted;
+    public int getCompanyId() {
+        return companyId;
     }
 
-    public void setDeleted(String deleted) {
-        this.deleted = deleted;
+    public void setCompanyId(int companyId) {
+        this.companyId = companyId;
     }
+
 }
