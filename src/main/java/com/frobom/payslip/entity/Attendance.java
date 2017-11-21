@@ -130,7 +130,7 @@ public class Attendance {
         return companyId;
     }
 
-    public void setCompany(int companyId) {
+    public void setCompanyId(int companyId) {
         this.companyId = companyId;
     }
 
