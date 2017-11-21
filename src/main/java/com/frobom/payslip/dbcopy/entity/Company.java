@@ -1,14 +1,17 @@
-package com.frobom.payslip.entity;
+package com.frobom.payslip.dbcopy.entity;
 
 import java.util.Date;
-
 import org.springframework.format.annotation.DateTimeFormat;
 
-public class Position {
+public class Company {
 
     protected int id;
 
+    private String companyName;
+
     private String name;
+
+    private String email;
 
     @DateTimeFormat(pattern = "MM/dd/yyyy")
     private Date modifiedDate;
@@ -18,8 +21,6 @@ public class Position {
 
     private String deleted;
 
-    private int companyId;
-
     public Integer getId() {
         return id;
     }
@@ -28,12 +29,28 @@ public class Position {
         this.id = id;
     }
 
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
+    }
+
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public Date getModifiedDate() {
@@ -59,13 +76,4 @@ public class Position {
     public void setDeleted(String deleted) {
         this.deleted = deleted;
     }
-
-    public int getCompanyId() {
-        return companyId;
-    }
-
-    public void setCompanyId(int companyId) {
-        this.companyId = companyId;
-    }
-
 }

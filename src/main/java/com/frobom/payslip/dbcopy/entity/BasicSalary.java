@@ -1,4 +1,4 @@
-package com.frobom.payslip.entity;
+package com.frobom.payslip.dbcopy.entity;
 
 import java.util.Date;
 

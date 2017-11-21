@@ -1,11 +1,11 @@
-package com.frobom.payslip.rowmapper;
+package com.frobom.payslip.dbcopy.rowmapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.springframework.jdbc.core.RowMapper;
 
-import com.frobom.payslip.entity.Company;
+import com.frobom.payslip.dbcopy.entity.Company;
 
 public class CompanyRowMapper implements RowMapper<Company> {
 

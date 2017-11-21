@@ -1,33 +1,36 @@
-package com.frobom.payslip.copydb;
+package com.frobom.payslip.dbcopy;
 
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.frobom.payslip.dbcopy.repository.CompanyRepository;
 import com.zaxxer.hikari.HikariDataSource;
 
 @Configuration
 @PropertySource("classpath:config.properties")
-public class KyuyoDatabaseConfig {
+public class PayslipDatabaseConfig {
 
-    @Value("${kyuyo.datasource.driver-class-name}")
+    @Value("${payslip.datasource.driver-class-name}")
     private String driverClassName;
 
-    @Value("${kyuyo.datasource.username}")
+    @Value("${payslip.datasource.username}")
     private String user;
 
-    @Value("${kyuyo.datasource.password}")
+    @Value("${payslip.datasource.password}")
     private String password;
 
-    @Value("${kyuyo.datasource.url}")
+    @Value("${payslip.datasource.url}")
     private String url;
 
-    @Bean(name = "kyuyoDataSource")
-    public DataSource kyuyoDataSource() {
+    @Primary
+    @Bean(name = "payslipDataSource")
+    public DataSource payslipDataSource() {
         HikariDataSource dataSource = new HikariDataSource();
         dataSource.setDriverClassName(driverClassName);
         dataSource.setUsername(user);
@@ -38,8 +41,13 @@ public class KyuyoDatabaseConfig {
         return dataSource;
     }
 
-    @Bean(name = "kyuyoJdbcTemplate")
-    public JdbcTemplate  kyuyoJdbcTemplate() {
-        return new JdbcTemplate(kyuyoDataSource());
+    @Bean(name = "payslipJdbcTemplate")
+    public JdbcTemplate  payslipJdbcTemplate() {
+        return new JdbcTemplate(payslipDataSource());
+    }
+
+    @Bean(name = "payslipCompanyRepository") 
+    public CompanyRepository payslipCompanyRepository() {
+        return new CompanyRepository(payslipJdbcTemplate());
     }
 }

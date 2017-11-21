@@ -1,4 +1,4 @@
-package com.frobom.payslip.copydb;
+package com.frobom.payslip.dbcopy;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -17,23 +18,39 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import com.frobom.payslip.entity.Attendance;
-import com.frobom.payslip.entity.Company;
-import com.frobom.payslip.entity.Grade;
-import com.frobom.payslip.entity.Holiday;
-import com.frobom.payslip.entity.Master;
-import com.frobom.payslip.entity.Position;
-import com.frobom.payslip.entity.Staff;
-import com.frobom.payslip.rowmapper.AttendanceRowMapper;
-import com.frobom.payslip.rowmapper.CompanyRowMapper;
-import com.frobom.payslip.rowmapper.GradeRowMapper;
-import com.frobom.payslip.rowmapper.HolidayRowMapper;
-import com.frobom.payslip.rowmapper.MasterRowMapper;
-import com.frobom.payslip.rowmapper.PositionRowMapper;
-import com.frobom.payslip.rowmapper.StaffRowMapper;
+import com.frobom.payslip.dbcopy.entity.Attendance;
+import com.frobom.payslip.dbcopy.entity.Company;
+import com.frobom.payslip.dbcopy.entity.Grade;
+import com.frobom.payslip.dbcopy.entity.Holiday;
+import com.frobom.payslip.dbcopy.entity.Master;
+import com.frobom.payslip.dbcopy.entity.Position;
+import com.frobom.payslip.dbcopy.entity.Staff;
+import com.frobom.payslip.dbcopy.repository.CompanyRepository;
+import com.frobom.payslip.dbcopy.rowmapper.AttendanceRowMapper;
+import com.frobom.payslip.dbcopy.rowmapper.CompanyRowMapper;
+import com.frobom.payslip.dbcopy.rowmapper.GradeRowMapper;
+import com.frobom.payslip.dbcopy.rowmapper.HolidayRowMapper;
+import com.frobom.payslip.dbcopy.rowmapper.MasterRowMapper;
+import com.frobom.payslip.dbcopy.rowmapper.PositionRowMapper;
+import com.frobom.payslip.dbcopy.rowmapper.StaffRowMapper;
 
 @SpringBootApplication
 public class Application implements CommandLineRunner {
+
+    private static final Date YESTERDAY_DATE;
+    private static final Date TOMORROW_DATE;
+    private static final Date LAST_THREE_MONTH_DATE;
+    static {
+        Calendar yesterdayCalendar = Calendar.getInstance();
+        yesterdayCalendar.add(Calendar.DAY_OF_MONTH, -1);
+        YESTERDAY_DATE = yesterdayCalendar.getTime();
+        Calendar tomorrowCalendar = Calendar.getInstance();
+        tomorrowCalendar.add(Calendar.DAY_OF_MONTH, 1);
+        TOMORROW_DATE = tomorrowCalendar.getTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MONTH, -3);
+        LAST_THREE_MONTH_DATE = calendar.getTime();
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
@@ -271,65 +288,17 @@ public class Application implements CommandLineRunner {
 
     public void copyCompanies() {
         System.out.println("Copying companies ...");
-        String payslipCompanyRowCountSql = "select count(id) from companies";
-        int companyCount = payslipJdbcTemplate.queryForObject(payslipCompanyRowCountSql, Integer.class);
-        System.out.println(companyCount);
-        List<Company> companies = new ArrayList<>();
-        String insertCompanySql = "insert into companies (id, company_name, created, deleted, mail, modified , name) "
-                + "values (?, ?, ?, ?, ?, ?, ?)";
-        String companyUpdateSql = "update companies set company_name = ?, "
-                + "created = ?, deleted = ?, mail = ?, modified = ?, name = ? where id = ?";
-
-        if (companyCount <= 0) {
-            String kyuyoCompaniesSql = "select * from companies";
-            companies = kyuyoJdbcTemplate.query(kyuyoCompaniesSql, new CompanyRowMapper());
-            for (Company company : companies) {
-                try {
-                    payslipJdbcTemplate.update(insertCompanySql, new Object[] {company.getId(),
-                            company.getCompanyName(), company.getCreatedDate(), 
-                            company.getDeleted(), company.getEmail(), company.getModifiedDate(), 
-                            company.getName()});
-                } catch(Exception ex) {
-                    
-                }
-               
+        if (payslipCompanyRepository.getRowCount() <= 0) {
+            for (Company company : kyuyoCompanyRepository.findAll()) {
+               payslipCompanyRepository.insert(company);
             }
         } else {
-          Calendar startCalendar = Calendar.getInstance();
-          startCalendar.add(Calendar.DAY_OF_MONTH, -1);
-          Calendar endCalendar = Calendar.getInstance();
-          endCalendar.add(Calendar.DAY_OF_MONTH, 1);
-          String kyuyoCompaniesSql = "select * from companies where (modified between  ? and ?) or (created between ? and ?)";
-          companies = kyuyoJdbcTemplate.query(kyuyoCompaniesSql, new Object[] {startCalendar.getTime(), endCalendar.getTime(),
-                  startCalendar.getTime(), endCalendar.getTime()}, new CompanyRowMapper());
-          for (Company company : companies) {
-              System.out.println(company.getName());
-              Company companyFromPayslipDb = null;
-              try {
-                  companyFromPayslipDb = payslipJdbcTemplate.queryForObject("select * from companies where id = ?", 
-                          new Object[] {company.getId()}, new CompanyRowMapper());
-              } catch (Exception ex) {
-                  // no result
-              }
+          for (Company company : kyuyoCompanyRepository.findBetweenCreatedOrModifiedDates(YESTERDAY_DATE, TOMORROW_DATE)) {
               // update
-              if (companyFromPayslipDb != null) {
-                    try {
-                        payslipJdbcTemplate.update(companyUpdateSql, new Object[] {company.getCompanyName(), company.getCreatedDate(),
-                                company.getDeleted(), company.getEmail(), company.getModifiedDate(), company.getName(), company.getId()});
-                    } catch (Exception ex) {
-
-                    }
-                  
+              if (payslipCompanyRepository.findById(company.getId()) != null) {
+                  payslipCompanyRepository.update(company);
               } else {
-                    try {
-                        payslipJdbcTemplate.update(insertCompanySql, new Object[] {company.getId(),
-                                company.getCompanyName(), company.getCreatedDate(), 
-                                company.getDeleted(), company.getEmail(), company.getModifiedDate(), 
-                                company.getName()});
-                    } catch (Exception ex) {
-
-                    }
-                 
+                  payslipCompanyRepository.insert(company);
               }
           }
         }
@@ -544,6 +513,13 @@ public class Application implements CommandLineRunner {
     @Autowired
     @Qualifier(value = "payslipJdbcTemplate")
     public JdbcTemplate  payslipJdbcTemplate;
-    
+
+    @Autowired
+    @Qualifier(value = "kyuyoCompanyRepository")
+    public CompanyRepository kyuyoCompanyRepository;
+
+    @Autowired
+    @Qualifier(value = "payslipCompanyRepository")
+    public CompanyRepository payslipCompanyRepository;
 
 }
